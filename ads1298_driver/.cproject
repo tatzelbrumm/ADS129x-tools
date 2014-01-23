@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.1930528981" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration artifactName="ads1298_driver" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.1930528981" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.cross.base.1930528981.2044495210" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.base.402713919" name="cdt.managedbuild.toolchain.gnu.cross.base" superClass="cdt.managedbuild.toolchain.gnu.cross.base">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.720186218" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
@@ -23,6 +23,8 @@
 							<builder id="cdt.managedbuild.builder.gnu.cross.682364135" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.builder.gnu.cross"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1077993200" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option id="gnu.c.compiler.option.include.paths.303047178" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/system/CMSIS/Device/ATMEL/sam3u/include"/>
+									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/system/CMSIS/Device/ATMEL/sam3u/include/component"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/libraries/SPI"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/cores/arduino"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/variants/arduino_due_x"/>
@@ -31,6 +33,8 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.207940583" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
 								<option id="gnu.cpp.compiler.option.include.paths.406146062" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/system/CMSIS/Device/ATMEL/sam3u/include"/>
+									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/system/CMSIS/Device/ATMEL/sam3u/include/component"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/libraries/SPI"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/cores/arduino"/>
 									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/variants/arduino_due_x"/>
@@ -46,7 +50,9 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.241055524" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.91759820" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
-								<option id="gnu.both.asm.option.include.paths.1299669655" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath"/>
+								<option id="gnu.both.asm.option.include.paths.1299669655" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
+									<listOptionValue builtIn="false" value="/home/cmaier/arduino/arduino-1.5.5/hardware/arduino/sam/variants/arduino_due_x"/>
+								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.177153361" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
