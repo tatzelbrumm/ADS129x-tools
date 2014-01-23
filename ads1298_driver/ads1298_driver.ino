@@ -48,45 +48,6 @@ char sampleBuffer[1000];
 
 SerialCommand serialCommand;  
 
-void setup() {  
-  WiredSerial.begin(115200); 
-  pinMode(PIN_LED,OUTPUT);      // Configure the onboard LED for output
-  digitalWrite(PIN_LED,LOW);    // default to LED off
-  arduinoSetup();
-  adsSetup();
-
-  WiredSerial.println("Ready"); 
-
-  // Setup callbacks for SerialCommand commands 
-  serialCommand.addCommand("version",version);        // Echos the driver version number
-  serialCommand.addCommand("ledon",ledOn);            // Turns Due onboad LED on
-  serialCommand.addCommand("ledoff", ledOff);         // Turns Due onboard LED off
-  serialCommand.addCommand("rreg", readRegister);     // Read ADS129x register, argument in hex, print contents in hex
-  serialCommand.addCommand("wreg", writeRegister);    // Write ADS129x register, arguments in hex
-  serialCommand.addCommand("rdata", rdata);           // Read one sample of data from each channel
-  serialCommand.addCommand("rdatac", rdatac);         // Enter read data continuous mode
-  serialCommand.addCommand("sdatac", sdatac);         // Stop read data continuous mode
-  serialCommand.addCommand("base64", base64ModeOn);   // rdata commands send base64 encoded data - default
-  serialCommand.addCommand("hex", hexModeOn);         // rdata commands send hex encoded data
-  serialCommand.addCommand("help", help);             // Print list of commands
-  serialCommand.setDefaultHandler(unrecognized);      // Handler for any command that isn't matched 
-
-}
-
-void loop() {  
-   serialCommand.readSerial();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-   sendSamples();
-}
-
 long hexToLong(char *digits) {
    using namespace std;
    char *error;
@@ -114,6 +75,50 @@ void encodeHex(char* output, char* input, int inputLen) {
     output[count++] = hexDigits[highNybble];
   }
   output[count] = 0;
+}
+
+// Use SAM3X DMA
+inline void sendSample(void) {
+    digitalWrite(PIN_CS, LOW);
+    register int numSerialBytes = (3 * (maxChannels+1)); //24-bits header plus 24-bits per channel
+    uint8_t returnCode = spiRec(serialBytes, numSerialBytes);
+    digitalWrite(PIN_CS, HIGH);
+    register unsigned int count = 0;
+    if (base64Mode == true) {
+       base64_encode(sampleBuffer, (char *)serialBytes, numSerialBytes);
+    } else {
+      encodeHex(sampleBuffer, (char *)serialBytes, numSerialBytes);
+    }
+    WiredSerial.println(sampleBuffer);
+}
+
+void sendSamples1(void) {
+    if ((!isRdatac) || (numActiveChannels < 1) )  return;
+    if (digitalRead(IPIN_DRDY) == HIGH) return;
+    sendSample();
+}
+
+
+inline void sendSamples(void) {
+    if ((!isRdatac) || (numActiveChannels < 1) )  return;
+    if (digitalRead(IPIN_DRDY) == HIGH) return;
+    sendSample();
+}
+
+void detectActiveChannels() {  //set device into RDATAC (continous) mode -it will stream data
+  if ((isRdatac) ||  (maxChannels < 1)) return; //we can not read registers when in RDATAC mode
+  //Serial.println("Detect active channels: ");
+  using namespace ADS1298; 
+  numActiveChannels = 0;
+  for (int i = 1; i <= maxChannels; i++) {
+    delayMicroseconds(1); 
+     int chSet = adc_rreg(CHnSET + i);
+     gActiveChan[i] = ((chSet & 7) != SHORTED);
+     if ( (chSet & 7) != SHORTED) numActiveChannels ++;   
+     //WiredSerial.print("Active channels: ");
+     //WiredSerial.println(numActiveChannels);
+  }
+  
 }
 
 void ledOn() {
@@ -239,56 +244,12 @@ void unrecognized(const char *command) {
 }
 
 
-void detectActiveChannels() {  //set device into RDATAC (continous) mode -it will stream data
-  if ((isRdatac) ||  (maxChannels < 1)) return; //we can not read registers when in RDATAC mode
-  //Serial.println("Detect active channels: ");
-  using namespace ADS1298; 
-  numActiveChannels = 0;
-  for (int i = 1; i <= maxChannels; i++) {
-    delayMicroseconds(1); 
-     int chSet = adc_rreg(CHnSET + i);
-     gActiveChan[i] = ((chSet & 7) != SHORTED);
-     if ( (chSet & 7) != SHORTED) numActiveChannels ++;   
-     //WiredSerial.print("Active channels: ");
-     //WiredSerial.println(numActiveChannels);
-  }
-  
-}
-
 //#define testSignal //use this to determine if your software is accurately measuring full range 24-bit signed data -8388608..8388607
 #ifdef testSignal
   int testInc = 1;
   int testPeriod = 100;
   byte testMSB, testLSB; 
 #endif 
-
-void sendSamples1(void) { 
-    if ((!isRdatac) || (numActiveChannels < 1) )  return;
-    if (digitalRead(IPIN_DRDY) == HIGH) return; 
-    sendSample();
-}
-
-
-inline void sendSamples(void) { 
-    if ((!isRdatac) || (numActiveChannels < 1) )  return;
-    if (digitalRead(IPIN_DRDY) == HIGH) return; 
-    sendSample();
-}
-
-// Use SAM3X DMA
-inline void sendSample(void) { 
-    digitalWrite(PIN_CS, LOW);
-    register int numSerialBytes = (3 * (maxChannels+1)); //24-bits header plus 24-bits per channel
-    uint8_t returnCode = spiRec(serialBytes, numSerialBytes);
-    digitalWrite(PIN_CS, HIGH);
-    register unsigned int count = 0;
-    if (base64Mode == true) {
-       base64_encode(sampleBuffer, (char *)serialBytes, numSerialBytes);
-    } else {
-      encodeHex(sampleBuffer, (char *)serialBytes, numSerialBytes);
-    }
-    WiredSerial.println(sampleBuffer);
-}
 
 void adsSetup() { //default settings for ADS1298 and compatible chips
    using namespace ADS1298;
@@ -374,6 +335,41 @@ void arduinoSetup(){
    digitalWrite(IPIN_RESET, HIGH);delay(1);  // *optional Wait for 18 tCLKs AKA 9 microseconds, we use 1 millisecond
 } //setup()
 
+void setup() {
+  WiredSerial.begin(115200);
+  pinMode(PIN_LED,OUTPUT);      // Configure the onboard LED for output
+  digitalWrite(PIN_LED,LOW);    // default to LED off
+  arduinoSetup();
+  adsSetup();
 
+  WiredSerial.println("Ready");
 
+  // Setup callbacks for SerialCommand commands
+  serialCommand.addCommand("version",version);        // Echos the driver version number
+  serialCommand.addCommand("ledon",ledOn);            // Turns Due onboad LED on
+  serialCommand.addCommand("ledoff", ledOff);         // Turns Due onboard LED off
+  serialCommand.addCommand("rreg", readRegister);     // Read ADS129x register, argument in hex, print contents in hex
+  serialCommand.addCommand("wreg", writeRegister);    // Write ADS129x register, arguments in hex
+  serialCommand.addCommand("rdata", rdata);           // Read one sample of data from each channel
+  serialCommand.addCommand("rdatac", rdatac);         // Enter read data continuous mode
+  serialCommand.addCommand("sdatac", sdatac);         // Stop read data continuous mode
+  serialCommand.addCommand("base64", base64ModeOn);   // rdata commands send base64 encoded data - default
+  serialCommand.addCommand("hex", hexModeOn);         // rdata commands send hex encoded data
+  serialCommand.addCommand("help", help);             // Print list of commands
+  serialCommand.setDefaultHandler(unrecognized);      // Handler for any command that isn't matched
 
+}
+
+void loop() {
+   serialCommand.readSerial();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+   sendSamples();
+}
